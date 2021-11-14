@@ -12,6 +12,20 @@ public class Entity {
     public Entity(){
         generateLocation();
     }
+
+    public void reset(){
+        x = 0f;
+        y = 0f;
+        vertices = new float[]{
+                -width+x,-height+y, //top left
+                width+x,height+y, //top right
+                -width+x,height+y, //bottom left
+                width+x,-height+y, //bottom right
+                width+x,height+y, //top right
+                -width+x,-height+y, //bottom left
+        };
+    }
+
     public void generateLocation(){
         Random random = new Random();
         int speedTemp = random.nextInt(3);
@@ -34,7 +48,7 @@ public class Entity {
          float y = random.nextFloat();
         neg = random.nextBoolean();
         if (neg)
-            y-=y;
+            y=-y;
         updateLocation(x,y);
     }
 
