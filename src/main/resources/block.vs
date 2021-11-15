@@ -1,14 +1,13 @@
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-layout (location = 2) in vec2 aTexCoord;
+#version 140
 
-out vec3 ourColor;
-out vec2 TexCoord;
+in vec2 position;
 
-void main()
-{
-	gl_Position = vec4(aPos, 1.0);
-	ourColor = aColor;
-	TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+out vec2 textureCoords;
+
+uniform mat4 transformationMatrix;
+
+void main(void){
+
+	gl_Position = transformationMatrix * vec4(position, 0.0, 1.0);
+	textureCoords = vec2((position.x+1.0)/2.0, 1 - (position.y+1.0)/2.0);
 }

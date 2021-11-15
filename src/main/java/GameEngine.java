@@ -1,10 +1,10 @@
-
+import java.io.IOException;
 
 public class GameEngine implements Runnable {
 
     public static final int TARGET_FPS = 75;
 
-    public static final int TARGET_UPS = 30;
+    public static final int TARGET_UPS = 1;
 
     private final Window window;
 
@@ -36,7 +36,7 @@ public class GameEngine implements Runnable {
         gameLogic.init();
     }
 
-    protected void gameLoop() {
+    protected void gameLoop() throws IOException {
         float elapsedTime;
         float accumulator = 0f;
         float interval = 1f / TARGET_UPS;
@@ -72,15 +72,15 @@ public class GameEngine implements Runnable {
         }
     }
 
-    protected void input() {
+    protected void input() throws IOException {
         gameLogic.input(window);
     }
 
-    protected void update(float interval) {
+    protected void update(float interval) throws IOException {
         gameLogic.update(interval);
     }
 
-    protected void render() {
+    protected void render() throws IOException {
         gameLogic.render(window);
         window.update();
     }

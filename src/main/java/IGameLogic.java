@@ -1,4 +1,4 @@
-
+import java.io.IOException;
 
 public interface IGameLogic {
 
@@ -6,9 +6,9 @@ public interface IGameLogic {
 
     void input(Window window);
 
-    void update(float interval);
+    void update(float interval) throws IOException;
 
-    void render(Window window);
+    void render(Window window) throws IOException;
 
     void cleanup();
 }

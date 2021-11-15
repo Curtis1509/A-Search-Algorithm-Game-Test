@@ -76,7 +76,7 @@ public class Texture {
         this.isRepeatEnabled = true;
     }
 
-    public static Texture loadPngTexture(Path path) throws IOException {
+    public static int loadPngTexture(Path path) throws IOException {
 
         //load png file
         PNGDecoder decoder = new PNGDecoder(new java.io.FileInputStream(path.toFile()));
@@ -102,8 +102,8 @@ public class Texture {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         //set the texture parameters, can be GL_LINEAR or GL_NEAREST
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         //upload texture
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, decoder.getWidth(), decoder.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
@@ -116,7 +116,7 @@ public class Texture {
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        return new Texture(id);
+        return id;
     }
 
     public boolean imageLoaded() {

@@ -1,78 +1,89 @@
-import static org.lwjgl.opengl.GL20.*;
 
-public class ShaderProgram {
 
-    private final int programId;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.FloatBuffer;
 
-    private int vertexShaderId;
+import org.joml.Matrix4f;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
 
-    private int fragmentShaderId;
+public abstract class ShaderProgram {
 
-    public ShaderProgram() throws Exception {
-        programId = glCreateProgram();
-        if (programId == 0) {
-            throw new Exception("Could not create Shader");
-        }
+    private int programID;
+    private int vertexShaderID;
+    private int fragmentShaderID;
+
+    public ShaderProgram(String vertexFile,String fragmentFile){
+        vertexShaderID = loadShader(vertexFile,GL20.GL_VERTEX_SHADER);
+        fragmentShaderID = loadShader(fragmentFile,GL20.GL_FRAGMENT_SHADER);
+        programID = GL20.glCreateProgram();
+        GL20.glAttachShader(programID, vertexShaderID);
+        GL20.glAttachShader(programID, fragmentShaderID);
+        bindAttributes();
+        GL20.glLinkProgram(programID);
+        GL20.glValidateProgram(programID);
     }
 
-    public void createVertexShader(String shaderCode) throws Exception {
-        vertexShaderId = createShader(shaderCode, GL_VERTEX_SHADER);
+    public void start(){
+        GL20.glUseProgram(programID);
     }
 
-    public void createFragmentShader(String shaderCode) throws Exception {
-        fragmentShaderId = createShader(shaderCode, GL_FRAGMENT_SHADER);
+    public void stop(){
+        GL20.glUseProgram(0);
     }
 
-    protected int createShader(String shaderCode, int shaderType) throws Exception {
-        int shaderId = glCreateShader(shaderType);
-        if (shaderId == 0) {
-            throw new Exception("Error creating shader. Type: " + shaderType);
-        }
-
-        glShaderSource(shaderId, shaderCode);
-        glCompileShader(shaderId);
-
-        if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
-            throw new Exception("Error compiling Shader code: " + glGetShaderInfoLog(shaderId, 1024));
-        }
-
-        glAttachShader(programId, shaderId);
-
-        return shaderId;
+    public void cleanUp(){
+        stop();
+        GL20.glDetachShader(programID, vertexShaderID);
+        GL20.glDetachShader(programID, fragmentShaderID);
+        GL20.glDeleteShader(vertexShaderID);
+        GL20.glDeleteShader(fragmentShaderID);
+        GL20.glDeleteProgram(programID);
     }
 
-    public void link() throws Exception {
-        glLinkProgram(programId);
-        if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-            throw new Exception("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
-        }
+    protected abstract void bindAttributes();
+    protected abstract void getAllUniformLocations();
 
-        if (vertexShaderId != 0) {
-            glDetachShader(programId, vertexShaderId);
-        }
-        if (fragmentShaderId != 0) {
-            glDetachShader(programId, fragmentShaderId);
-        }
 
-        glValidateProgram(programId);
-        if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-            System.err.println("Warning validating Shader code: " + glGetProgramInfoLog(programId, 1024));
-        }
-
+    protected void bindAttribute(int attribute, String variableName){
+        GL20.glBindAttribLocation(programID, attribute, variableName);
     }
 
-    public void bind() {
-        glUseProgram(programId);
-    }
-
-    public void unbind() {
-        glUseProgram(0);
-    }
-
-    public void cleanup() {
-        unbind();
-        if (programId != 0) {
-            glDeleteProgram(programId);
+    private static int loadShader(String file, int type){
+        StringBuilder shaderSource = new StringBuilder();
+        try{
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line;
+            while((line = reader.readLine())!=null){
+                shaderSource.append(line).append("//\n");
+            }
+            reader.close();
+        }catch(IOException e){
+            e.printStackTrace();
+            System.exit(-1);
         }
+        int shaderID = GL20.glCreateShader(type);
+        GL20.glShaderSource(shaderID, shaderSource);
+        GL20.glCompileShader(shaderID);
+        if(GL20.glGetShaderi(shaderID, GL20.GL_COMPILE_STATUS )== GL11.GL_FALSE){
+            System.out.println(GL20.glGetShaderInfoLog(shaderID, 500));
+            System.err.println("Could not compile shader!");
+            System.exit(-1);
+        }
+        return shaderID;
+    }
+
+    private static FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
+
+    protected void loadMatrix(int location, Matrix4f matrix){
+        matrix.get(matrixBuffer);
+        GL20.glUniformMatrix4fv(location, false, matrixBuffer);
+    }
+
+    protected int getUniformLocation(String uniformName){
+        return GL20.glGetUniformLocation(programID,uniformName);
     }
 }
