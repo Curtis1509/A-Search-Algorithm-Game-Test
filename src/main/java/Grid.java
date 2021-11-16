@@ -316,8 +316,8 @@ public class Grid {
             this.y = y;
 
             Random random = new Random();
-            int r = random.nextInt(7);
-            if (r == 4 ) {
+            int r = random.nextInt(2);
+            if (r == 1 ) {
                 blocked = true;
             }
             x = x - 10;
