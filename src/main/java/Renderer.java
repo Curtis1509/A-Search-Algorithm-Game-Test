@@ -58,7 +58,7 @@ public class Renderer {
         grid = new Grid();
 
 
-        grid.runThreads(3);
+        grid.runThreads(Game.player.length-1);
 
         glEnable(GL_TEXTURE_2D);
 
@@ -67,7 +67,7 @@ public class Renderer {
         }
         for (int i =0; i < 20; i++){
             for (int j =0; j < 20; j++) {
-                quad = loadToVAO(grid.getBlock(i,j).gridVerticies);
+                quad = loadToVAO(grid.getBlock(i,j).gridVertices);
             }
         }
     }
@@ -164,16 +164,18 @@ public class Renderer {
                 shaderProgram.loadTransformation(matrix);
                 //if (grid.getBlock(i,j).blocked)
 
-                if (grid.path.contains(grid.getBlock(i,j)) && grid.finished && !grid.getBlock(i,j).painted) {
-                    try {
-                        grid.getBlock(i,j).sprite.updateTexture(Texture.loadPngTexture(resource("textures", "path" + ".png")));
-                        grid.getBlock(i,j).painted = true;
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                for (int k = 0; k < Grid.threads.size(); k++) {
+                    if (grid.pathContains(grid.getBlock(i, j)) && Grid.threads.get(k).finished && !grid.getBlock(i, j).painted) {
+                        try {
+                            grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(resource("textures", "path" + ".png")));
+                            grid.getBlock(i, j).painted = true;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else if (!grid.pathContains(grid.getBlock(i, j)) && grid.getBlock(i, j).painted) {
+                        grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(resource("textures", "empty" + ".png")));
+                        grid.getBlock(i, j).painted = false;
                     }
-                } else if (!grid.path.contains(grid.getBlock(i,j)) && grid.getBlock(i,j).painted){
-                    grid.getBlock(i,j).sprite.updateTexture(Texture.loadPngTexture(resource("textures", "empty" + ".png")));
-                    grid.getBlock(i,j).painted = false;
                 }
                 GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
                 GL20.glDisableVertexAttribArray(0);

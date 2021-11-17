@@ -16,6 +16,7 @@ public class Game implements IGameLogic {
     private final Renderer renderer;
 
 
+
     public Game() throws IOException {
         renderer = new Renderer();
     }
@@ -25,7 +26,7 @@ public class Game implements IGameLogic {
     @Override
     public void init() throws Exception {
 
-        player = new Entity[5];
+        player = new Entity[15];
         for (int i =0 ; i < player.length; i++) {
             if (i == 0)
             player[i] = new Entity("player", false);
@@ -45,20 +46,22 @@ public class Game implements IGameLogic {
             }
         }
         if (window.isKeyPressed(GLFW_KEY_F)) {
-            Grid.set = false;
-            player[1].calculated = false;
+            Renderer.grid.resetThreads();
         }
-        if ( window.isKeyPressed(GLFW_KEY_UP) || window.isKeyPressed(GLFW_KEY_W) ) {
-            player[0].updateLocation(0,speed,false);
-        } else if ( window.isKeyPressed(GLFW_KEY_DOWN) || window.isKeyPressed(GLFW_KEY_S) ) {
-            player[0].updateLocation(0,-speed,false);
-        }if ( window.isKeyPressed(GLFW_KEY_LEFT) || window.isKeyPressed(GLFW_KEY_A) ) {
-            player[0].updateLocation(-speed,0.0f,false);
-        } else if ( window.isKeyPressed(GLFW_KEY_RIGHT) || window.isKeyPressed(GLFW_KEY_D) ) {
-            player[0].updateLocation(speed,0.0f,false);
-        } else {
-            direction = 0;
-        }
+
+            if (window.isKeyPressed(GLFW_KEY_UP) || window.isKeyPressed(GLFW_KEY_W)) {
+                player[0].updateLocation(0, speed, false);
+            } else if (window.isKeyPressed(GLFW_KEY_DOWN) || window.isKeyPressed(GLFW_KEY_S)) {
+                player[0].updateLocation(0, -speed, false);
+            }
+            if (window.isKeyPressed(GLFW_KEY_LEFT) || window.isKeyPressed(GLFW_KEY_A)) {
+                player[0].updateLocation(-speed, 0.0f, false);
+            } else if (window.isKeyPressed(GLFW_KEY_RIGHT) || window.isKeyPressed(GLFW_KEY_D)) {
+                player[0].updateLocation(speed, 0.0f, false);
+            } else {
+                direction = 0;
+            }
+
 
         for (int i = 1; i < player.length; i++) {
             if (player[0].getX() < player[i].getX())
