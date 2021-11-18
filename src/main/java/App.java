@@ -1,3 +1,5 @@
+import java.nio.file.Path;
+
 public class App {
 
     public static void main(String[] args) {
@@ -11,4 +13,10 @@ public class App {
             System.exit(-1);
         }
     }
+
+    private static final Path resourcePath = Path.of("src", "main", "resources");
+    public static Path resource(String first, String... more) {
+        return resourcePath.resolve(Path.of(first, more)).toAbsolutePath();
+    }
+
 }

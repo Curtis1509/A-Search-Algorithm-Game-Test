@@ -1,15 +1,10 @@
 import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
-import java.nio.FloatBuffer;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_CULL_FACE;
@@ -33,92 +28,29 @@ import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 public class Renderer {
 
     private GuiShader shaderProgram;
-    private ShaderProgram playerShader;
-    private ShaderProgram blockShader;
-
-    public Renderer() throws IOException {
-    }
-
-    private VertexArrayObject vao;
-
+    private final VertexArrayObject vao = new VertexArrayObject();
+    public static Grid grid;
     private RawModel quad;
-    Path resourcePath = Path.of("src", "main", "resources");
 
-    public Path resource(String first, String... more) {
-        return resourcePath.resolve(Path.of(first, more)).toAbsolutePath();
-    }
-
-    Sprite sprite;
     public void init() throws Exception {
 
-        //sprite = new Sprite(Texture.loadPngTexture(resource("textures", "block.png")),new Vector2f(0.5f,0.5f),new Vector2f(0.25f,0.25f));
-
         shaderProgram = new GuiShader();
-
         grid = new Grid();
-
-
-        grid.runThreads(Game.player.length-1);
-
+        grid.runThreads(Game.entities.length);
         glEnable(GL_TEXTURE_2D);
 
-        for (int i =0 ; i < Game.player.length;i++) {
-            quad = loadToVAO(Game.player[i].vertices);
+        for (int i = 0; i < Game.entities.length; i++) {
+            quad = vao.loadToVAO(Game.entities[i].vertices);
         }
         for (int i =0; i < 20; i++){
             for (int j =0; j < 20; j++) {
-                quad = loadToVAO(grid.getBlock(i,j).gridVertices);
+                quad = vao.loadToVAO(grid.getBlock(i,j).gridVertices);
             }
         }
     }
 
-    public static Grid grid;
 
-    private List<Integer> vaos = new ArrayList<Integer>();
-    private List<Integer> vbos = new ArrayList<Integer>();
-    private List<Integer> textures = new ArrayList<Integer>();
-
-    public Matrix4f createTransformationMatrix(Vector2f translation, Vector2f scale) {
-        Matrix4f matrix = new Matrix4f();
-        matrix.translate(new Vector3f(translation.x, translation.y, 1f));
-        matrix.scale(new Vector3f(scale.x, scale.y, 1f));
-        return matrix;
-    }
-
-    private int createVAO(){
-        int vaoID = GL30.glGenVertexArrays();
-        vaos.add(vaoID);
-        GL30.glBindVertexArray(vaoID);
-        return vaoID;
-    }
-    private void storeDataInAttributeList(int attributeNumber, int coordinateSize,float[] data){
-        int vboID = GL15.glGenBuffers();
-        vbos.add(vboID);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboID);
-        FloatBuffer buffer = storeDataInFloatBuffer(data);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-        GL20.glVertexAttribPointer(attributeNumber,coordinateSize, GL11.GL_FLOAT,false,0,0);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-    }
-    private FloatBuffer storeDataInFloatBuffer(float[] data){
-        FloatBuffer buffer = BufferUtils.createFloatBuffer(data.length);
-        buffer.put(data);
-        buffer.flip();
-        return buffer;
-    }
-    private void unbindVAO(){
-        GL30.glBindVertexArray(0);
-    }
-
-    public RawModel loadToVAO(float positions[]){
-        int vaoID = createVAO();
-        this.storeDataInAttributeList(0,2,positions);
-        unbindVAO();
-        return new RawModel (vaoID, positions.length/2);
-    }
-
-
-    public void render(Window window, Entity player) throws IOException {
+    public void render(Window window) throws IOException {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -131,27 +63,6 @@ public class Renderer {
             window.setResized(false);
         }
 
-
-
-        FloatBuffer verticesBuffer = null;
-/*
-
-        for (int ii = 0; ii < 20; ii++) {
-            for (int j = 0; j < 20; j++) {
-
-
-                grid.getBlock(ii, j).getTexture().bind();
-                blockShader.bind();
-                //glDrawArrays(GL_TRIANGLES, 0, 6);
-                grid.getBlock(ii, j).getTexture().unbind();
-
-            }
-        }
-
-        blockShader.unbind();
-        blockShader.bind();
-        */
-
         shaderProgram.start();
 
         for (int i = 0; i < 20; i++){
@@ -160,20 +71,19 @@ public class Renderer {
                 GL20.glEnableVertexAttribArray(0);
                 GL13.glActiveTexture(GL13.GL_TEXTURE0);
                 GL11.glBindTexture(GL11.GL_TEXTURE_2D, grid.getBlock(i,j).sprite.getTexture());
-                Matrix4f matrix = createTransformationMatrix(grid.getBlock(i,j).sprite.getPosition(), grid.getBlock(i,j).sprite.getScale());
+                Matrix4f matrix = MathTools.createTransformationMatrix(grid.getBlock(i,j).sprite.getPosition(), grid.getBlock(i,j).sprite.getScale());
                 shaderProgram.loadTransformation(matrix);
-                //if (grid.getBlock(i,j).blocked)
 
                 for (int k = 0; k < Grid.threads.size(); k++) {
                     if (grid.pathContains(grid.getBlock(i, j)) && Grid.threads.get(k).finished && !grid.getBlock(i, j).painted) {
                         try {
-                            grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(resource("textures", "path" + ".png")));
+                            grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "path" + ".png")));
                             grid.getBlock(i, j).painted = true;
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     } else if (!grid.pathContains(grid.getBlock(i, j)) && grid.getBlock(i, j).painted) {
-                        grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(resource("textures", "empty" + ".png")));
+                        grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "empty" + ".png")));
                         grid.getBlock(i, j).painted = false;
                     }
                 }
@@ -183,48 +93,45 @@ public class Renderer {
             }
         }
 
-        for (int i = 0; i < Game.player.length; i++) {
+        for (int i = 0; i < Game.entities.length; i++) {
 
-            if (i > 0) {
-            }
-
-
-           //Game.player[i].mesh.render();
             GL30.glBindVertexArray(quad.getVaoID());
             GL20.glEnableVertexAttribArray(0);
             GL13.glActiveTexture(GL13.GL_TEXTURE0);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, Game.player[i].sprite.getTexture());
-            Game.player[i].update();
-            Matrix4f matrix = createTransformationMatrix(Game.player[i].sprite.getPosition(), Game.player[i].sprite.getScale());
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, Game.entities[i].sprite.getTexture());
+            Game.entities[i].update();
+            Matrix4f matrix = MathTools.createTransformationMatrix(Game.entities[i].sprite.getPosition(), Game.entities[i].sprite.getScale());
             shaderProgram.loadTransformation(matrix);
             GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
             GL20.glDisableVertexAttribArray(0);
             GL30.glBindVertexArray(0);
 
         }
-        shaderProgram.stop();
 
+        GL30.glBindVertexArray(quad.getVaoID());
+        GL20.glEnableVertexAttribArray(0);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, Game.player.sprite.getTexture());
+        Game.player.update();
+        Matrix4f matrix = MathTools.createTransformationMatrix(Game.player.sprite.getPosition(), Game.player.sprite.getScale());
+        shaderProgram.loadTransformation(matrix);
+        GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
+        GL20.glDisableVertexAttribArray(0);
+        GL30.glBindVertexArray(0);
+
+        shaderProgram.stop();
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
 
     }
 
-    public void clear() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-
     public void cleanup() {
         if (shaderProgram != null) {
             shaderProgram.cleanUp();
         }
-
         glDisableVertexAttribArray(0);
-
-        // Delete the VBO
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        // Delete the VAO
         glBindVertexArray(0);
     }
 }

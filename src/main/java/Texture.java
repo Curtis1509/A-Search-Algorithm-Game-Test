@@ -2,13 +2,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Path;
-
 import static org.lwjgl.opengl.GL33C.*;
-
 import de.matthiasmann.twl.utils.PNGDecoder;
-
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.MemoryUtil;
 
@@ -48,8 +44,6 @@ public class Texture {
             String reason = String.format("Texture: %s%n", STBImage.stbi_failure_reason());
             throw new RuntimeException(reason);
         }
-
-       // MemoryUsage.record(Texture.class, "Texture(_)", path.toString(), imageData.capacity());
 
         id = glGenTextures();
         bind();

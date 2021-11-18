@@ -10,38 +10,27 @@ public class Grid {
 
 
     Block[][] blocks = new Block[20][20];
-
-    public Block[][] getBlocks() {
-        return blocks;
-    }
-
     public Block getBlock(int i, int j) {
         return blocks[i][j];
     }
 
-    public Path resource(String first, String... more) {
-        return resourcePath.resolve(Path.of(first, more)).toAbsolutePath();
-    }
-
     public void resetThreads() {
-        for (int i = 0; i < threads.size(); i++) {
-            threads.get(i).stop();
+        for (PathFinder thread : threads) {
+            thread.stop();
         }
 
         threads = new LinkedList<>();
         runThreads(index);
     }
 
-    Path resourcePath = Path.of("src", "main", "resources");
-
     public Grid() throws IOException {
 
         int x = 0;
-        int y = 0;
+        int y;
 
         while (x < 20) {
             y = 0;
-            while (y < 20 && x < 20) {
+            while (y < 20) {
                 blocks[x][y] = new Block(x, y);
                 y++;
             }
@@ -63,15 +52,14 @@ public class Grid {
         this.index = index;
         for (int i = 0; i < index; i++) {
             threads.add(new PathFinder());
-            System.out.println("adding thread for player " + (i + 1));
-            threads.get(i).index = i + 1;
+            threads.get(i).index = i;
             threads.get(i).start();
         }
     }
 
     public boolean pathContains(Block b) {
-        for (int i = 0; i < threads.size(); i++) {
-            if (threads.get(i).path.contains(b))
+        for (PathFinder thread : threads) {
+            if (thread.path.contains(b))
                 return true;
         }
         return false;
@@ -87,17 +75,13 @@ public class Grid {
         Block end;
 
         public void reset(int index) {
-
-            System.out.println("resetting " + index);
-
-            //end = null;
             openSet.clear();
             closedSet.clear();
             path.clear();
 
             for (int i = 0; i < 20; i++) {
                 for (int j = 0; j < 20; j++) {
-                    blocks[i][j].previous.set(index-1,null);
+                    blocks[i][j].previous.set(index, null);
                 }
             }
 
@@ -107,16 +91,15 @@ public class Grid {
                     float xf = (blocks[i][j].x * 0.1f) - 1f;
                     float yf = (blocks[i][j].y * 0.1f) - 1f;
 
-                    if (Game.player[index].x >= xf && Game.player[index].x < xf + 2f / 20) {
-                        if (Game.player[index].y >= yf && Game.player[index].y < yf + 2f / 20) {
+                    if (Game.entities[index].x >= xf && Game.entities[index].x < xf + 2f / 20) {
+                        if (Game.entities[index].y >= yf && Game.entities[index].y < yf + 2f / 20) {
                             if (!blocks[i][j].blocked) {
                                 openSet.add(blocks[i][j]);
-                                System.out.println("adding starting block " + i + " , " + j + " for player " + index);
                             } else {
                                 try {
                                     reset(index);
                                 } catch (StackOverflowError e) {
-                                    System.out.println("Stack overflew");
+                                   // System.out.println("Stack overflew");
                                     try {
                                         Thread.sleep(500);
                                         reset(index);
@@ -140,8 +123,8 @@ public class Grid {
                         float yf = (blocks[i][j].y * 0.1f) - 1f;
 
 
-                        if (Game.player[0].x >= xf && Game.player[0].x <= xf + 2f / 20) {
-                            if (Game.player[0].y >= yf && Game.player[0].y <= yf + 2f / 20) {
+                        if (Game.player.x >= xf && Game.player.x <= xf + 2f / 20) {
+                            if (Game.player.y >= yf && Game.player.y <= yf + 2f / 20) {
                                 if (blocks[i][j].blocked) {
                                     try {
                                         Thread.sleep(200);
@@ -151,17 +134,14 @@ public class Grid {
                                     reset(index);
                                 }
                                 end = blocks[i][j];
-                                System.out.println("Adding end block for player " + index);
                                 i = 20;
                                 j = 20;
                             }
                         }
                         if (end == null) {
                             try {
-                                System.out.println("end is null for player " + index);
                                 reset(index);
                             } catch (StackOverflowError e) {
-                                //  System.out.println("failed to locate a player, tried to reset but stack overflowed");
                             }
                         }
                     }
@@ -171,8 +151,6 @@ public class Grid {
                 reset(index);
         }
 
-        public static boolean set = false;
-
         public double heuristic(Block a, Block b) {
             return Math.sqrt((Math.pow(a.x, 2) + Math.pow(a.y, 2)) - (Math.pow(b.x, 2) + Math.pow(b.y, 2)));
         }
@@ -181,12 +159,10 @@ public class Grid {
 
         @Override
         public void run() {
-            System.out.println("adding a thread for i: " + index);
-            int finalIndex = index;
-            reset(index);
-            while (true) {
 
-                System.out.println("running player " + index + " thread");
+            reset(index);
+
+            while (true) {
                 int timeInside = 0;
                 while (!finished) {
                     timeInside++;
@@ -210,20 +186,15 @@ public class Grid {
                             Block temp = current;
 
                             path.add(current);
-                            int count1 = 0;
-                            while (temp.previous.get(index-1) != null) {
-                                count1++;
-                                if (count1 == 1) {
-
-                                }
-                                path.add(temp.previous.get(index-1));
-                                temp = temp.previous.get(index-1);
+                            while (temp.previous.get(index) != null) {
+                                path.add(temp.previous.get(index));
+                                temp = temp.previous.get(index);
                             }
 
                             if (path.size() > 1) {
-                                Game.player[index].calculated = false;
-                                Game.player[index].nextX = path.get(path.size() - 2).x;
-                                Game.player[index].nextY = path.get(path.size() - 2).y;
+                                Game.entities[index].calculated = false;
+                                Game.entities[index].nextX = path.get(path.size() - 2).x;
+                                Game.entities[index].nextY = path.get(path.size() - 2).y;
                             }
                             finished = true;
 
@@ -234,12 +205,12 @@ public class Grid {
                         Block temp = current;
                         path.add(current);
                         int add = 0;
-                        while (temp.previous.get(index-1) != null) {
+                        while (temp.previous.get(index) != null) {
                             if (add > 500)
                                 reset(index);
                             add++;
-                            path.add(temp.previous.get(index-1));
-                            temp = temp.previous.get(index-1);
+                            path.add(temp.previous.get(index));
+                            temp = temp.previous.get(index);
                         }
 
 
@@ -247,8 +218,7 @@ public class Grid {
                         closedSet.add(current);
 
                         ArrayList<Block> neighbors = current.neighbours;
-                        for (int i1 = 0; i1 < neighbors.size(); i1++) {
-                            Block neighbor = neighbors.get(i1);
+                        for (Block neighbor : neighbors) {
                             if (!closedSet.contains(neighbor)) {
                                 int tempG = current.g + 1;
 
@@ -268,7 +238,7 @@ public class Grid {
                                     break;
                                 }
                                 neighbor.f = neighbor.g + neighbor.h;
-                                neighbor.previous.set(index-1, current);
+                                neighbor.previous.set(index, current);
                             }
                         }
                     }
@@ -300,7 +270,7 @@ public class Grid {
 
         public Block(int x, int y) throws IOException {
 
-            for (int i = 0 ; i < Game.player.length; i++) {
+            for (int i = 0; i < Game.entities.length+1; i++) {
                 previous.add(null);
             }
             this.x = x;
@@ -317,9 +287,9 @@ public class Grid {
             }
 
             if (blocked)
-                sprite = new Sprite(Texture.loadPngTexture(resource("textures", "block" + ".png")), new Vector2f(xf, yf), new Vector2f(2f / 20 - 0.05f, 2f / 20 - 0.05f));
+                sprite = new Sprite(Texture.loadPngTexture(App.resource("textures", "block" + ".png")), new Vector2f(xf, yf), new Vector2f(2f / 20 - 0.05f, 2f / 20 - 0.05f));
             else
-                sprite = new Sprite(Texture.loadPngTexture(resource("textures", "empty" + ".png")), new Vector2f(xf, yf), new Vector2f(2f / 20 - 0.05f, 2f / 20 - 0.05f));
+                sprite = new Sprite(Texture.loadPngTexture(App.resource("textures", "empty" + ".png")), new Vector2f(xf, yf), new Vector2f(2f / 20 - 0.05f, 2f / 20 - 0.05f));
 
             gridVertices = new float[]{
                     -1, 1, -1, -1, 1, 1, 1, -1

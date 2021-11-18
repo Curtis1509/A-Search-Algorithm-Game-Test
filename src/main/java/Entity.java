@@ -45,13 +45,13 @@ public class Entity {
         int speedTemp = random.nextInt(3);
         switch (speedTemp) {
             case 0:
-                speed = 0.002f;
+                speed = 0.006f;
                 break;
             case 1:
-                speed = 0.004f;
+                speed = 0.008f;
                 break;
             case 2:
-                speed = 0.006f;
+                speed = 0.01f;
                 break;
         }
 
