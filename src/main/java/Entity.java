@@ -101,14 +101,16 @@ public class Entity {
               //  System.out.println(nextX + " nx " + this.x + " x " + nextY + " ny " + this.y + " y");
             }
 
+            int divider = 6;
+
             if (nextX+0.05f > this.x)
-                this.x+=speed/3;
+                this.x+=speed/divider;
             else if (nextX+0.05f < this.x-0.01f)
-                this.x-=speed/3;
+                this.x-=speed/divider;
             if (nextY+0.05f > this.y)
-                this.y+=speed/3;
+                this.y+=speed/divider;
             else if (nextY+0.05f < this.y-0.01f)
-                this.y-=speed/3;
+                this.y-=speed/divider;
        //     else
              //   System.out.println("we all good");
 

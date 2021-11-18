@@ -42,9 +42,9 @@ public class Renderer {
         for (int i = 0; i < Game.entities.length; i++) {
             quad = vao.loadToVAO(Game.entities[i].vertices);
         }
-        for (int i =0; i < 20; i++){
-            for (int j =0; j < 20; j++) {
-                quad = vao.loadToVAO(grid.getBlock(i,j).gridVertices);
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                quad = vao.loadToVAO(grid.getBlock(i, j).gridVertices);
             }
         }
     }
@@ -65,33 +65,7 @@ public class Renderer {
 
         shaderProgram.start();
 
-        for (int i = 0; i < 20; i++){
-            for (int j = 0; j < 20; j++){
-                GL30.glBindVertexArray(quad.getVaoID());
-                GL20.glEnableVertexAttribArray(0);
-                GL13.glActiveTexture(GL13.GL_TEXTURE0);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, grid.getBlock(i,j).sprite.getTexture());
-                Matrix4f matrix = MathTools.createTransformationMatrix(grid.getBlock(i,j).sprite.getPosition(), grid.getBlock(i,j).sprite.getScale());
-                shaderProgram.loadTransformation(matrix);
-
-                for (int k = 0; k < Grid.threads.size(); k++) {
-                    if (grid.pathContains(grid.getBlock(i, j)) && Grid.threads.get(k).finished && !grid.getBlock(i, j).painted) {
-                        try {
-                            grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "path" + ".png")));
-                            grid.getBlock(i, j).painted = true;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (!grid.pathContains(grid.getBlock(i, j)) && grid.getBlock(i, j).painted) {
-                        grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "empty" + ".png")));
-                        grid.getBlock(i, j).painted = false;
-                    }
-                }
-                GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
-                GL20.glDisableVertexAttribArray(0);
-                GL30.glBindVertexArray(0);
-            }
-        }
+        renderGrid();
 
         for (int i = 0; i < Game.entities.length; i++) {
 
@@ -113,6 +87,22 @@ public class Renderer {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, Game.player.sprite.getTexture());
         Game.player.update();
+        if (Game.left && !Game.renderedDirection.equals("left")) {
+            Game.player.sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "playerleft" + ".png")));
+            Game.renderedDirection="left";
+        }
+        if (Game.right && !Game.renderedDirection.equals("right")) {
+            Game.player.sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "playerright" + ".png")));
+            Game.renderedDirection="right";
+        }
+        if (Game.up && !Game.renderedDirection.equals("up")) {
+            Game.player.sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "playerup" + ".png")));
+            Game.renderedDirection="up";
+        }
+        if (Game.down && !Game.renderedDirection.equals("down")) {
+            Game.player.sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "playerdown" + ".png")));
+            Game.renderedDirection="down";
+        }
         Matrix4f matrix = MathTools.createTransformationMatrix(Game.player.sprite.getPosition(), Game.player.sprite.getScale());
         shaderProgram.loadTransformation(matrix);
         GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
@@ -125,6 +115,54 @@ public class Renderer {
         glBindVertexArray(0);
 
     }
+
+    public void renderGrid() throws IOException {
+
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                GL30.glBindVertexArray(quad.getVaoID());
+                GL20.glEnableVertexAttribArray(0);
+                GL13.glActiveTexture(GL13.GL_TEXTURE0);
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, grid.getBlock(i, j).sprite.getTexture());
+                Matrix4f matrix = MathTools.createTransformationMatrix(grid.getBlock(i, j).sprite.getPosition(), grid.getBlock(i, j).sprite.getScale());
+                shaderProgram.loadTransformation(matrix);
+
+                if (Game.showPath)
+                    renderPath(i, j);
+                else if (Game.pPressed && !grid.getBlock(i, j).blocked)
+                    grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "empty" + ".png")));
+
+                GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
+                GL20.glDisableVertexAttribArray(0);
+                GL30.glBindVertexArray(0);
+            }
+        }
+    }
+
+    public void renderPath(int i, int j) throws IOException {
+
+        GL30.glBindVertexArray(quad.getVaoID());
+        GL20.glEnableVertexAttribArray(0);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, grid.getBlock(i, j).sprite.getTexture());
+        Matrix4f matrix = MathTools.createTransformationMatrix(grid.getBlock(i, j).sprite.getPosition(), grid.getBlock(i, j).sprite.getScale());
+        shaderProgram.loadTransformation(matrix);
+
+        for (int k = 0; k < Grid.threads.size(); k++) {
+            if (grid.pathContains(grid.getBlock(i, j)) && Grid.threads.get(k).finished && !grid.getBlock(i, j).painted) {
+                try {
+                    grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "path" + ".png")));
+                    grid.getBlock(i, j).painted = true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (!grid.pathContains(grid.getBlock(i, j)) && grid.getBlock(i, j).painted) {
+                grid.getBlock(i, j).sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "empty" + ".png")));
+                grid.getBlock(i, j).painted = false;
+            }
+        }
+    }
+
 
     public void cleanup() {
         if (shaderProgram != null) {

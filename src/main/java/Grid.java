@@ -191,10 +191,18 @@ public class Grid {
                                 temp = temp.previous.get(index);
                             }
 
-                            if (path.size() > 1) {
+                            if (path.size() > 2) {
                                 Game.entities[index].calculated = false;
                                 Game.entities[index].nextX = path.get(path.size() - 2).x;
                                 Game.entities[index].nextY = path.get(path.size() - 2).y;
+                            }
+                            else {
+                                if (Game.playerHealth>0) {
+                                    Game.playerHealth--;
+                                    System.out.println("Player health: " + Game.playerHealth);
+                                }
+                                else
+                                    System.out.println("You died!");
                             }
                             finished = true;
 
