@@ -46,6 +46,7 @@ public class Grid {
 
     static LinkedList<PathFinder> threads = new LinkedList<>();
 
+
     int index;
 
     public void runThreads(int index) {
@@ -91,8 +92,8 @@ public class Grid {
                     float xf = (blocks[i][j].x * 0.1f) - 1f;
                     float yf = (blocks[i][j].y * 0.1f) - 1f;
 
-                    if (Game.entities[index].x >= xf && Game.entities[index].x < xf + 2f / 20) {
-                        if (Game.entities[index].y >= yf && Game.entities[index].y < yf + 2f / 20) {
+                    if (Game.entities.get(index).x >= xf && Game.entities.get(index).x < xf + 2f / 20) {
+                        if (Game.entities.get(index).y >= yf && Game.entities.get(index).y < yf + 2f / 20) {
                             if (!blocks[i][j].blocked) {
                                 openSet.add(blocks[i][j]);
                             } else {
@@ -192,9 +193,9 @@ public class Grid {
                             }
 
                             if (path.size() > 2) {
-                                Game.entities[index].calculated = false;
-                                Game.entities[index].nextX = path.get(path.size() - 2).x;
-                                Game.entities[index].nextY = path.get(path.size() - 2).y;
+                                Game.entities.get(index).calculated = false;
+                                Game.entities.get(index).nextX = path.get(path.size() - 2).x;
+                                Game.entities.get(index).nextY = path.get(path.size() - 2).y;
                             }
                             else {
                                 if (Game.playerHealth>0) {
@@ -278,7 +279,7 @@ public class Grid {
 
         public Block(int x, int y) throws IOException {
 
-            for (int i = 0; i < Game.entities.length+1; i++) {
+            for (int i = 0; i < Game.entities.size()+1; i++) {
                 previous.add(null);
             }
             this.x = x;

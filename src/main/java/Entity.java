@@ -14,6 +14,7 @@ public class Entity {
     float width = size * 0.75f;
     float height = size;
     float x = 0f;
+    int health = 100;
     float y = 0f;
     float speed = 0f;
     public Sprite sprite;
@@ -91,6 +92,44 @@ public class Entity {
         if (!enemy) {
             this.x += x;
             this.y += y;
+            if (Game.renderedDirection.equals("left") ) {
+                if (!Game.attack) {
+                    Renderer.swordSprite.position.x = Game.player.x - 0.05f;
+                    Renderer.swordSprite.position.y = Game.player.y + 0.05f;
+                }
+                else{
+                    Renderer.swordSprite.position.x = Game.player.x - 0.07f;
+                    Renderer.swordSprite.position.y = Game.player.y ;
+                }
+            }
+            else if (Game.renderedDirection.equals("right")) {
+                if (!Game.attack) {
+                    Renderer.swordSprite.position.x = Game.player.x + 0.05f;
+                    Renderer.swordSprite.position.y = Game.player.y + 0.05f;
+                } else {
+                    Renderer.swordSprite.position.x = Game.player.x + 0.07f;
+                    Renderer.swordSprite.position.y = Game.player.y ;
+                }
+            }
+            else if (Game.renderedDirection.equals("up") ) {
+                if (!Game.attack) {
+                    Renderer.swordSprite.position.x = Game.player.x + 0.05f;
+                    Renderer.swordSprite.position.y = Game.player.y + 0.05f;
+                }
+                else{
+                    Renderer.swordSprite.position.x = Game.player.x + 0.015f;
+                    Renderer.swordSprite.position.y = Game.player.y + 0.05f;
+                }
+            }
+            else if (Game.renderedDirection.equals("down")) {
+                if (!Game.attack) {
+                    Renderer.swordSprite.position.x = Game.player.x - 0.05f;
+                    Renderer.swordSprite.position.y = Game.player.y + 0.05f;
+                } else {
+                    Renderer.swordSprite.position.x = Game.player.x - 0.04f;
+                    Renderer.swordSprite.position.y = Game.player.y -0.015f;
+                }
+            }
         } else {
 
             if (!calculated) {

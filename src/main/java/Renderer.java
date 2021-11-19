@@ -1,4 +1,5 @@
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
@@ -32,15 +33,19 @@ public class Renderer {
     public static Grid grid;
     private RawModel quad;
 
+    public Renderer() {
+    }
+
     public void init() throws Exception {
 
+        swordSprite = new Sprite(Texture.loadPngTexture(App.resource("textures", "sword" + ".png")), new Vector2f(Game.player.x, Game.player.y), new Vector2f(Game.player.width, Game.player.height));
         shaderProgram = new GuiShader();
         grid = new Grid();
-        grid.runThreads(Game.entities.length);
+        grid.runThreads(Game.entities.size());
         glEnable(GL_TEXTURE_2D);
 
-        for (int i = 0; i < Game.entities.length; i++) {
-            quad = vao.loadToVAO(Game.entities[i].vertices);
+        for (int i = 0; i < Game.entities.size(); i++) {
+            quad = vao.loadToVAO(Game.entities.get(i).vertices);
         }
         for (int i = 0; i < 20; i++) {
             for (int j = 0; j < 20; j++) {
@@ -67,14 +72,14 @@ public class Renderer {
 
         renderGrid();
 
-        for (int i = 0; i < Game.entities.length; i++) {
+        for (int i = 0; i < Game.entities.size(); i++) {
 
             GL30.glBindVertexArray(quad.getVaoID());
             GL20.glEnableVertexAttribArray(0);
             GL13.glActiveTexture(GL13.GL_TEXTURE0);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, Game.entities[i].sprite.getTexture());
-            Game.entities[i].update();
-            Matrix4f matrix = MathTools.createTransformationMatrix(Game.entities[i].sprite.getPosition(), Game.entities[i].sprite.getScale());
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, Game.entities.get(i).sprite.getTexture());
+            Game.entities.get(i).update();
+            Matrix4f matrix = MathTools.createTransformationMatrix(Game.entities.get(i).sprite.getPosition(), Game.entities.get(i).sprite.getScale());
             shaderProgram.loadTransformation(matrix);
             GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
             GL20.glDisableVertexAttribArray(0);
@@ -87,6 +92,7 @@ public class Renderer {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, Game.player.sprite.getTexture());
         Game.player.update();
+
         if (Game.left && !Game.renderedDirection.equals("left")) {
             Game.player.sprite.updateTexture(Texture.loadPngTexture(App.resource("textures", "playerleft" + ".png")));
             Game.renderedDirection="left";
@@ -109,11 +115,31 @@ public class Renderer {
         GL20.glDisableVertexAttribArray(0);
         GL30.glBindVertexArray(0);
 
+
+        renderSword(swordSprite);
+
         shaderProgram.stop();
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
 
+    }
+
+    public static Sprite swordSprite;
+
+    public void renderSword(Sprite spriteName) {
+        GL30.glBindVertexArray(quad.getVaoID());
+        GL20.glEnableVertexAttribArray(0);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, spriteName.getTexture());
+        Matrix4f matrix = MathTools.createTransformationMatrix(spriteName.getPosition(), spriteName.getScale());
+        shaderProgram.loadTransformation(matrix);
+        GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
+        GL20.glDisableVertexAttribArray(0);
+        GL30.glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glDisableVertexAttribArray(0);
+        glBindVertexArray(0);
     }
 
     public void renderGrid() throws IOException {
