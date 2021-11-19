@@ -28,10 +28,10 @@ import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 
 public class Renderer {
 
-    private GuiShader shaderProgram;
+    public static GuiShader shaderProgram;
     private final VertexArrayObject vao = new VertexArrayObject();
     public static Grid grid;
-    private RawModel quad;
+    public static RawModel quad;
 
     public Renderer() {
     }
@@ -116,7 +116,7 @@ public class Renderer {
         GL30.glBindVertexArray(0);
 
 
-        renderSword(swordSprite);
+        swordSprite.render();
 
         shaderProgram.stop();
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -126,21 +126,6 @@ public class Renderer {
     }
 
     public static Sprite swordSprite;
-
-    public void renderSword(Sprite spriteName) {
-        GL30.glBindVertexArray(quad.getVaoID());
-        GL20.glEnableVertexAttribArray(0);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, spriteName.getTexture());
-        Matrix4f matrix = MathTools.createTransformationMatrix(spriteName.getPosition(), spriteName.getScale());
-        shaderProgram.loadTransformation(matrix);
-        GL11.glDrawArrays(GL_TRIANGLE_STRIP, 0, quad.getVertexCount());
-        GL20.glDisableVertexAttribArray(0);
-        GL30.glBindVertexArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glDisableVertexAttribArray(0);
-        glBindVertexArray(0);
-    }
 
     public void renderGrid() throws IOException {
 

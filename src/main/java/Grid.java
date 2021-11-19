@@ -10,6 +10,7 @@ public class Grid {
 
 
     Block[][] blocks = new Block[20][20];
+
     public Block getBlock(int i, int j) {
         return blocks[i][j];
     }
@@ -66,6 +67,42 @@ public class Grid {
         return false;
     }
 
+    public void adjustIndex() {
+        if (threads.size() > Game.entities.size()) {
+            int remove = threads.size() - Game.entities.size();
+            for (int i = 0; i < remove; i++) {
+                threads.getFirst().stop();
+                threads.removeFirst();
+            }
+            for (int i = 0; i < threads.size(); i++) {
+                threads.get(i).index = i;
+                System.out.println(threads.get(i).index);
+            }
+
+        } else {
+            System.out.println("adding threads");
+            int add = Game.entities.size() - threads.size();
+            addThreads(add);
+        }
+    }
+
+    public void addThreads(int add) {
+        for (int i = 0; i < add + 1; i++) {
+            threads.add(new PathFinder());
+            threads.getFirst().index = Game.entities.size() - i;
+            index = Game.entities.size();
+            for (int j = 0; j < 20; j++) {
+                for (int k = 0; k < 20; k++) {
+                    blocks[j][k].addPrevious(add + 100);
+                }
+            }
+
+            threads.getLast().start();
+            System.out.println("thread running " + threads.getLast().isAlive());
+        }
+        resetThreads();
+    }
+
 
     class PathFinder extends Thread {
 
@@ -100,7 +137,7 @@ public class Grid {
                                 try {
                                     reset(index);
                                 } catch (StackOverflowError e) {
-                                   // System.out.println("Stack overflew");
+                                    // System.out.println("Stack overflew");
                                     try {
                                         Thread.sleep(500);
                                         reset(index);
@@ -196,14 +233,13 @@ public class Grid {
                                 Game.entities.get(index).calculated = false;
                                 Game.entities.get(index).nextX = path.get(path.size() - 2).x;
                                 Game.entities.get(index).nextY = path.get(path.size() - 2).y;
-                            }
-                            else {
-                                if (Game.playerHealth>0) {
+                            } else {
+                                if (Game.playerHealth > 0) {
                                     Game.playerHealth--;
-                                    System.out.println("Player health: " + Game.playerHealth);
+                                    //System.out.println("Player health: " + Game.playerHealth);
                                 }
-                                else
-                                    System.out.println("You died!");
+                                //else
+                                // System.out.println("You died!");
                             }
                             finished = true;
 
@@ -212,14 +248,21 @@ public class Grid {
 
                         path.clear();
                         Block temp = current;
+
                         path.add(current);
                         int add = 0;
-                        while (temp.previous.get(index) != null) {
-                            if (add > 500)
-                                reset(index);
-                            add++;
-                            path.add(temp.previous.get(index));
-                            temp = temp.previous.get(index);
+
+                        try {
+                            while (temp.previous.get(index) != null) {
+                                if (add > 500)
+                                    reset(index);
+                                add++;
+                                path.add(temp.previous.get(index));
+                                temp = temp.previous.get(index);
+                            }
+                        }catch(NullPointerException e){
+                            System.out.println("nulls");
+                            reset(index);
                         }
 
 
@@ -277,11 +320,18 @@ public class Grid {
         ArrayList<Block> neighbours = new ArrayList<>();
         public boolean painted = false;
 
-        public Block(int x, int y) throws IOException {
-
-            for (int i = 0; i < Game.entities.size()+1; i++) {
+        public void addPrevious(int add) {
+            for (int i = 0; i < add; i++) {
                 previous.add(null);
             }
+        }
+
+        public Block(int x, int y) throws IOException {
+
+            for (int i = 0; i < Game.entities.size() + 10000; i++) {
+                previous.add(null);
+            }
+
             this.x = x;
             this.y = y;
             x = x - 10;
